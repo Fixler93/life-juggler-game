@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Life Juggler - Noam's Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-wrapper">
+        
+        <div id="utility-buttons">
+            <button id="btn-pause" title="השהה משחק">⏸️</button>
+            <button id="btn-info" title="מידע והוראות">ℹ️</button>
+        </div>
+
+        <div id="start-modal" class="modal" style="display: flex;">
+            <h1>צו 8! התחלנו</h1>
+            <p>בחר בנשק, המתן לטעינה, וחורר כל מטרה שקופצת מאחורי החומה.<br>בוא נתחמם קצת לפני שהבלגן האמיתי מתחיל.</p>
+            <button id="start-btn">אשר הגעה ולבש ציוד</button>
+        </div>
+
+        <div id="stage2-modal" class="modal">
+            <h1>שלב שני: הגנה אזרחית</h1>
+            <p>יש אזעקות! כשהמסך מהבהב באדום, עזוב הכל וכנס למרחב המוגן.<br>כשיש טיל באוויר, <b>לחץ על סוללת היירוט שמופיעה לידך</b>.</p>
+            <button class="continue-btn" data-stage="2">הבנתי, חזרה לשטח</button>
+        </div>
+
+        <div id="stage3-modal" class="modal">
+            <h1>שלב שלישי: חזרו הלימודים!</h1>
+            <p>כשתקפוץ התראה על הרצאה, עבור ל"תואר ראשון" ותן לזום לעלות.<br>כשיקפוץ סימן קריאה (<span style="color:#f1c40f; font-weight:bold;">!</span>) - לחץ עליו כדי להשתתף בשיעור.</p>
+            <button class="continue-btn" data-stage="3">פתח מחברות</button>
+        </div>
+
+        <div id="stage4-modal" class="modal">
+            <h1>שלב רביעי: אבא במשרה מלאה</h1>
+            <p>עמית הקטן יצטרך יחס מדי פעם.<br>עבור ל"תינוק", ואם מופיע סמל של טיטול (<span style="font-size:1.5rem">💩</span>), לחץ עליו כדי להחליף.</p>
+            <button class="continue-btn" data-stage="4">הכן מגבונים</button>
+        </div>
+
+        <div id="stage5-modal" class="modal">
+            <h1>שלב חמישי: משמרת באינטל</h1>
+            <p>יקפוץ לך חלון CMD עם שאילתת SQL (למשל: לבחור בטבלה 1 או 2).<br>קרא את השאילתה, ולחץ על הטבלה הנכונה במסך כדי לענות.</p>
+            <button class="continue-btn" data-stage="5">התחבר ל-VPN</button>
+        </div>
+
+        <div id="info-modal" class="modal">
+            <h1>הוראות המשחק</h1>
+            <div id="info-content" style="text-align: right; margin-bottom: 20px; font-size: 1.1rem; line-height: 1.6;">
+                <p id="info-s1">🔫 <b>נשק:</b> טען (3 שניות) וירה במטרות הקופצות.</p>
+                <p id="info-s2" style="display:none;">🛡️ <b>מגן:</b> הפעל באזעקה. לחץ על הסוללה לידך ליירוט טילים.</p>
+                <p id="info-s3" style="display:none;">🎓 <b>לימודים:</b> התחבר לזום ולחץ על סימן הקריאה להשתתפות.</p>
+                <p id="info-s4" style="display:none;">🍼 <b>תינוק:</b> החלף טיטול כשהוא בוכה.</p>
+                <p id="info-s5" style="display:none;">💻 <b>עבודה:</b> קרא את שאילתת ה-SQL ולחץ על הטבלה הנכונה.</p>
+            </div>
+            <button id="close-info-btn">חזור למשחק</button>
+        </div>
+
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <div id="toolbar">
+            <button id="btn-weapon" class="tool-btn disabled-btn" disabled><span class="btn-icon">🔫</span><span class="btn-text">נשק</span></button>
+            <button id="btn-shelter" class="tool-btn disabled-btn" disabled><span class="btn-icon">🛡️</span><span class="btn-text">מגן</span></button>
+            <button id="btn-intel" class="tool-btn disabled-btn" disabled><span class="btn-icon">💻</span><span class="btn-text">אינטל</span></button>
+            <button id="btn-uni" class="tool-btn disabled-btn" disabled><span class="btn-icon">🎓</span><span class="btn-text">תואר</span></button>
+            <button id="btn-baby" class="tool-btn disabled-btn" disabled><span class="btn-icon">🍼</span><span class="btn-text">תינוק</span></button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
