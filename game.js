@@ -16,7 +16,7 @@ let currentStage = 1;
 let score = 0;
 let frames = 0;
 let framesInCurrentStage = 0; 
-const FRAMES_PER_STAGE = 1500; // כ-40 שניות לכל שלב, כדי להספיק לחוות אותו
+const FRAMES_PER_STAGE = 1500; // מעבר שלב לפי זמן מוקצב
 
 let currentAction = 'idle'; 
 
@@ -35,16 +35,26 @@ let incomingMissile = null;
 let interceptMissile = null;
 let particles = [];
 
+// ---- מערכת סטטיסטיקות וסיכום ----
+let stats = {
+    targets: { total: 0, success: 0 },
+    missiles: { total: 0, success: 0 },
+    lectures: { total: 0, success: 0 },
+    baby: { total: 0, success: 0 },
+    work: { total: 0, success: 0 }
+};
+
+let stage5Counters = { missiles: 0, lectures: 0, baby: 0, work: 0 };
+
+
 // ================= מחלקות עזר =================
 class Target {
     constructor() {
         this.x = Math.random() * (canvas.width - 120) + 60; 
         this.y = canvas.height - 120;
-        this.radius = 25; 
-        this.speed = 1.5; // מהירות נוחה ובינונית
+        this.radius = 25; this.speed = 1.5; 
         this.maxHeight = Math.random() * 80 + 80;
-        this.state = 'rising'; 
-        this.timer = 120; // כשתי שניות באוויר
+        this.state = 'rising'; this.timer = 120; 
     }
     update() {
         if (this.state === 'rising') { this.y -= this.speed; if (this.y <= this.maxHeight) this.state = 'waiting'; } 
@@ -206,6 +216,45 @@ function drawHUD() {
     }
 }
 
+// ================= לוגיקת סיום ואיפוס =================
+
+function triggerEndGame() {
+    isPlaying = false;
+    
+    // בניית הסיכום
+    const summaryHTML = `
+        <p>🎯 מטרות שחיסלת: <span style="color:#2ecc71;">${stats.targets.success}</span> / ${stats.targets.total}</p>
+        <p>🚀 טילים שיורטו: <span style="color:#2ecc71;">${stats.missiles.success}</span> / ${stats.missiles.total}</p>
+        <p>🎓 שיעורי זום שהשתתפת: <span style="color:#2ecc71;">${stats.lectures.success}</span> / ${stats.lectures.total}</p>
+        <p>🍼 טיטולים שהוחלפו: <span style="color:#2ecc71;">${stats.baby.success}</span> / ${stats.baby.total}</p>
+        <p>💻 פתרונות SQL שסגרת: <span style="color:#2ecc71;">${stats.work.success}</span> / ${stats.work.total}</p>
+    `;
+    
+    document.getElementById('summary-stats').innerHTML = summaryHTML;
+    document.getElementById('final-score').innerText = `ניקוד סופי: ${score}`;
+    document.getElementById('summary-modal').style.display = 'flex';
+}
+
+document.getElementById('restart-btn').addEventListener('click', () => {
+    document.getElementById('summary-modal').style.display = 'none';
+    
+    // איפוס מלא של כל הנתונים
+    score = 0; frames = 0; framesInCurrentStage = 0; currentStage = 1;
+    stats = { targets: {total:0, success:0}, missiles: {total:0, success:0}, lectures: {total:0, success:0}, baby: {total:0, success:0}, work: {total:0, success:0} };
+    stage5Counters = { missiles: 0, lectures: 0, baby: 0, work: 0 };
+    
+    clearAllEvents();
+    
+    // איפוס כפתורים
+    ['shelter', 'intel', 'uni', 'baby'].forEach(key => {
+        btns[key].classList.add('disabled-btn');
+        btns[key].disabled = true;
+    });
+    
+    // חזרה למסך פתיחה
+    document.getElementById('start-modal').style.display = 'flex';
+});
+
 // ================= לוגיקת אירועים ולחיצות =================
 
 function setAction(action) {
@@ -268,7 +317,8 @@ canvas.addEventListener('mousedown', (e) => {
         let hit = false;
         for (let i = targets.length - 1; i >= 0; i--) {
             if (Math.hypot(mouseX - targets[i].x, mouseY - targets[i].y) < targets[i].radius) {
-                createExplosion(targets[i].x, targets[i].y, '#e74c3c'); targets.splice(i, 1); score += 10; hit = true; break;
+                createExplosion(targets[i].x, targets[i].y, '#e74c3c'); targets.splice(i, 1); 
+                score += 10; stats.targets.success++; hit = true; break;
             }
         }
         createExplosion(mouseX, mouseY, hit ? '#f1c40f' : '#bdc3c7'); 
@@ -282,7 +332,7 @@ canvas.addEventListener('mousedown', (e) => {
 
     if (currentAction === 'study' && studySubState === 'active' && participationMark.active) {
         if (Math.hypot(mouseX - (canvas.width/2 + 35), mouseY - (canvas.height - 165)) < 25) {
-            participationMark.active = false; score += 15; createExplosion(mouseX, mouseY, '#3498db');
+            participationMark.active = false; score += 15; stats.lectures.success++; createExplosion(mouseX, mouseY, '#3498db');
         }
     }
 
@@ -294,10 +344,10 @@ canvas.addEventListener('mousedown', (e) => {
 
     if (currentAction === 'work' && workSubState === 'active' && workEventActive) {
         if (mouseX > canvas.width/2 - 80 && mouseX < canvas.width/2 - 20 && mouseY > canvas.height - 210 && mouseY < canvas.height - 190) {
-            if (workSqlType === 1) { score += 20; createExplosion(mouseX, mouseY, '#00b894'); workEventActive = false; } else { score -= 10; }
+            if (workSqlType === 1) { score += 20; stats.work.success++; createExplosion(mouseX, mouseY, '#00b894'); workEventActive = false; } else { score -= 10; }
         }
         else if (mouseX > canvas.width/2 + 80 && mouseX < canvas.width/2 + 140 && mouseY > canvas.height - 210 && mouseY < canvas.height - 190) {
-            if (workSqlType === 2) { score += 20; createExplosion(mouseX, mouseY, '#00b894'); workEventActive = false; } else { score -= 10; }
+            if (workSqlType === 2) { score += 20; stats.work.success++; createExplosion(mouseX, mouseY, '#00b894'); workEventActive = false; } else { score -= 10; }
         }
     }
 });
@@ -313,7 +363,13 @@ function gameLoop() {
     frames++;
     framesInCurrentStage++;
 
-    // מעברי שלב (כל 40 שניות)
+    // ---- בדיקת סיום המשחק (שלב 5: 4 מכל סוג) ----
+    if (currentStage === 5 && stage5Counters.missiles >= 4 && stage5Counters.lectures >= 4 && stage5Counters.baby >= 4 && stage5Counters.work >= 4) {
+        triggerEndGame();
+        return; // עוצר את הלולאה
+    }
+
+    // מעברי שלב 1-4 (כל 40 שניות)
     if (currentStage === 1 && framesInCurrentStage > FRAMES_PER_STAGE) {
         isPlaying = false; currentStage = 2; framesInCurrentStage = 0; clearAllEvents(); document.getElementById('stage2-modal').style.display = 'flex';
     } 
@@ -327,22 +383,28 @@ function gameLoop() {
         isPlaying = false; currentStage = 5; framesInCurrentStage = 0; clearAllEvents(); document.getElementById('stage5-modal').style.display = 'flex';
     }
 
-    // ---- ניהול אירועי מערכת (הסתברויות מוגברות למקבילות) ----
+    // ---- ניהול אירועי מערכת ----
     
-    // אזעקות (בממוצע פעם ב-11 שניות)
+    // אזעקות
     if (currentStage >= 2 && !isSirenActive && Math.random() < 0.0015) { isSirenActive = true; sirenTimer = 600; btns.shelter.disabled = false; }
     if (isSirenActive) {
         sirenTimer--;
         if (sirenTimer <= 0) { isSirenActive = false; btns.shelter.disabled = true; incomingMissile = null; interceptMissile = null; if(currentAction === 'shelter') setAction('weapon'); }
-        // טיל נופל בסיכוי סביר
-        if (!incomingMissile && sirenTimer > 100 && Math.random() < 0.015) incomingMissile = { x: Math.random() * (canvas.width - 60) + 30, y: -50, speed: 1.5 };
+        if (!incomingMissile && sirenTimer > 100 && Math.random() < 0.015) {
+            incomingMissile = { x: Math.random() * (canvas.width - 60) + 30, y: -50, speed: 1.5 };
+            stats.missiles.total++;
+            if (currentStage === 5) stage5Counters.missiles++;
+        }
     }
 
-    // לימודים (בממוצע פעם ב-16 שניות)
-    if (currentStage >= 3 && !isLectureActive && Math.random() < 0.001) { isLectureActive = true; lectureTimer = 900; } 
+    // לימודים
+    if (currentStage >= 3 && !isLectureActive && Math.random() < 0.001) { 
+        isLectureActive = true; lectureTimer = 900; 
+        stats.lectures.total++;
+        if (currentStage === 5) stage5Counters.lectures++;
+    } 
     if (isLectureActive) {
         lectureTimer--; if (lectureTimer <= 0) { isLectureActive = false; participationMark.active = false; }
-        // סימן קריאה קופץ בסיכוי טוב ונותן 4 שניות להגיב
         if (!participationMark.active && Math.random() < 0.01) { participationMark.active = true; participationMark.timer = 240; }
     }
     if (participationMark.active) {
@@ -350,26 +412,37 @@ function gameLoop() {
     }
     if (currentAction === 'study' && studySubState === 'opening') { studyOpenTimer--; if (studyOpenTimer <= 0) studySubState = 'active'; }
 
-    // תינוק (בממוצע פעם ב-11 שניות, נותן 15 שניות לגשת)
-    if (currentStage >= 4 && !babyNeedsAttention && Math.random() < 0.0015) { babyNeedsAttention = true; babyTimer = 900; } 
+    // תינוק 
+    if (currentStage >= 4 && !babyNeedsAttention && Math.random() < 0.0015) { 
+        babyNeedsAttention = true; babyTimer = 900; 
+        stats.baby.total++;
+        if (currentStage === 5) stage5Counters.baby++;
+    } 
     if (babyNeedsAttention && babySubState !== 'changing') {
         babyTimer--;
         if (babyTimer <= 0) { babyNeedsAttention = false; score -= 20; }
     }
     if (babySubState === 'changing') {
         babyActionTimer--;
-        if (babyActionTimer <= 0) { babySubState = 'idle'; babyNeedsAttention = false; score += 20; }
+        if (babyActionTimer <= 0) { babySubState = 'idle'; babyNeedsAttention = false; score += 20; stats.baby.success++; }
     }
 
-    // עבודה (בממוצע פעם ב-11 שניות, נותן 12 שניות לגשת)
-    if (currentStage >= 5 && !workEventActive && Math.random() < 0.0015) { workEventActive = true; workSqlType = Math.random() > 0.5 ? 1 : 2; workTimer = 720; } 
+    // עבודה 
+    if (currentStage >= 5 && !workEventActive && Math.random() < 0.0015) { 
+        workEventActive = true; workSqlType = Math.random() > 0.5 ? 1 : 2; workTimer = 720; 
+        stats.work.total++;
+        stage5Counters.work++;
+    } 
     if (workEventActive) {
         workTimer--; if (workTimer <= 0) { workEventActive = false; score -= 20; } 
     }
     if (currentAction === 'work' && workSubState === 'opening') { workOpenTimer--; if (workOpenTimer <= 0) workSubState = 'active'; }
 
-    // מטרות (מופיעות כל 2.5 שניות)
-    if (frames % 150 === 0) targets.push(new Target()); 
+    // מטרות 
+    if (frames % 150 === 0) {
+        targets.push(new Target()); 
+        stats.targets.total++;
+    }
     
     for (let i = targets.length - 1; i >= 0; i--) {
         targets[i].update(); if (targets[i].y > canvas.height) { targets.splice(i, 1); score -= 5; }
@@ -386,7 +459,7 @@ function gameLoop() {
     if (interceptMissile && incomingMissile) {
         const dx = incomingMissile.x - interceptMissile.x; const dy = incomingMissile.y - interceptMissile.y; const dist = Math.hypot(dx, dy);
         interceptMissile.x += (dx / dist) * interceptMissile.speed; interceptMissile.y += (dy / dist) * interceptMissile.speed;
-        if (dist < 20) { createExplosion(interceptMissile.x, interceptMissile.y, '#f1c40f'); score += 50; incomingMissile = null; interceptMissile = null; }
+        if (dist < 20) { createExplosion(interceptMissile.x, interceptMissile.y, '#f1c40f'); score += 50; stats.missiles.success++; incomingMissile = null; interceptMissile = null; }
     }
     drawMissiles();
 
