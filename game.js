@@ -16,7 +16,7 @@ let currentStage = 1;
 let score = 0;
 let frames = 0;
 let framesInCurrentStage = 0; 
-const FRAMES_PER_STAGE = 1500; // מעבר שלב לפי זמן מוקצב
+const FRAMES_PER_STAGE = 1400; // מעבר שלב לפי זמן מוקצב
 
 let currentAction = 'idle'; 
 
